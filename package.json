@@ -1,0 +1,43 @@
+{
+  "name": "penny-auction",
+  "version": "2.0.0",
+  "description": "PennyBid — multi-instance penny auction system (payments disabled until an approved processor is configured)",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "build": "tsc",
+    "test": "DATABASE_URL=postgres://penny:penny@127.0.0.1:5432/penny_test REDIS_URL=redis://127.0.0.1:6379 SESSION_SECRET=test-session-secret-please-change NODE_ENV=test DEMO_MODE=0 PAYMENTS_ENABLED=0 node --import tsx --test --test-concurrency=1 --test-force-exit test/*.test.ts",
+    "typecheck": "tsc --noEmit --pretty false",
+    "screenshots": "tsx scripts/screenshots.ts"
+  },
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1159.0",
+    "argon2": "^0.44.0",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "ioredis": "^5.8.2",
+    "multer": "^2.0.2",
+    "nodemailer": "^7.0.9",
+    "pg": "^8.16.3",
+    "sharp": "^0.35.5",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/cookie-parser": "^1.4.10",
+    "@types/express": "^5.0.3",
+    "@types/multer": "^2.0.0",
+    "@types/node": "^20.19.22",
+    "@types/nodemailer": "^7.0.2",
+    "@types/pg": "^8.15.5",
+    "playwright": "^1.56.1",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  }
+}

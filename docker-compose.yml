@@ -1,0 +1,63 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: penny
+      POSTGRES_PASSWORD: penny
+      POSTGRES_DB: penny
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U penny -d penny"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  app1: &app
+    build: .
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://penny:penny@postgres:5432/penny
+      REDIS_URL: redis://redis:6379
+      PORT: "4317"
+      TRUST_PROXY: "1"
+      UPLOAD_DIR: /app/storage/uploads
+      NODE_ENV: production
+    volumes:
+      - uploads:/app/storage/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4317/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  app2:
+    <<: *app
+
+  proxy:
+    image: nginx:1.27-alpine
+    ports:
+      - "4317:80"
+    volumes:
+      - ./deploy/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - app1
+      - app2
+
+volumes:
+  pgdata:
+  uploads:

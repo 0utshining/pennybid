@@ -1,0 +1,10 @@
+node_modules
+dist
+.git
+.env
+storage
+screenshots
+test
+*.md
+uploads
+agent-tools
