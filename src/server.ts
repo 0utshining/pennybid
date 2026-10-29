@@ -19,6 +19,7 @@ import { getSocialProof, recentTicker } from './social';
 import { legalBySlug } from './legal';
 import { createBidPackOrder, createWinnerOrder, handlePaymentWebhook, refundOrder, updateShipment } from './orders';
 import { seed } from './seed';
+import { topUpDemoAuctions } from './demoTopUp';
 import { log } from './logger';
 import { createStorage, ObjectStorage } from './storage';
 import { addEmbed, addImage, addVideo, deleteMedia, IMAGE_MAX_BYTES, listMedia, listMediaForProducts, PublicMedia, reorderMedia, sniffImage, sniffVideo, updateMedia, VIDEO_MAX_BYTES } from './media';
@@ -127,6 +128,18 @@ export async function createApp(opts: {
       try { await lock.query('SELECT pg_advisory_unlock(874521)'); } catch { /* connection already closed */ }
       lock.release();
     }
+  }
+
+  const topUp = async () => {
+    try { await topUpDemoAuctions(pool, cfg); } catch (err) {
+      log('error', 'demo top-up failed', { err: err instanceof Error ? err.message : String(err) });
+    }
+  };
+  let topUpTimer: NodeJS.Timeout | undefined;
+  if (cfg.demoMode && opts.seed) {
+    await topUp();
+    topUpTimer = setInterval(topUp, 5 * 60_000);
+    topUpTimer.unref?.();
   }
 
   const stopCloser = opts.closer === false ? () => {} : await engine.startCloser();
@@ -1005,6 +1018,7 @@ export async function createApp(opts: {
     app, pool, engine, cfg, provider, realtime, schema,
     close: async () => {
       stopCloser();
+      if (topUpTimer) clearInterval(topUpTimer);
       clearInterval(heartbeat);
       await realtime.close();
       await pool.end();
