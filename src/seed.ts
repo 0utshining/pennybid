@@ -41,7 +41,7 @@ export async function seed(pool: Pool, engine: Engine, uploadDir: string, cfg: C
     }
   }
 
-  const now = Date.now();
+  let now = Date.now();
   const productIds: number[] = [];
   for (let i = 0; i < items.length; i++) {
     const [name, desc, retail] = items[i];
@@ -108,6 +108,8 @@ export async function seed(pool: Pool, engine: Engine, uploadDir: string, cfg: C
     t += 120_000;
     await past.closeDue();
 
+    // Image generation can take minutes on small hosts; re-read the clock so live auctions start live.
+    now = Date.now();
     const liveEnds = [90_000, 3 * 60_000, 5 * 60_000, 8 * 60_000];
     const liveProducts = [productIds[0], productIds[1], productIds[2], productIds[4]];
     const liveIds: number[] = [];
